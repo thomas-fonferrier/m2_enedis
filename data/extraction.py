@@ -14,6 +14,11 @@ import pandas as pd
 import requests
 from sklearn.impute import KNNImputer
 
+try:
+    from .meteo import METEO_CSV, enrich_dpe_with_meteo
+except ImportError:
+    from meteo import METEO_CSV, enrich_dpe_with_meteo
+
 URL_EXISTANTS = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
 URL_NEUFS = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe02neuf/lines"
 
@@ -28,7 +33,7 @@ KNN_NEIGHBORS = 5
 
 
 def fetch_dpe(url: str, n: int, type_logement: str) -> pd.DataFrame:
-    """Récupère `n` DPE page par page depuis l'API ADEME."""
+    """Récupère `n` DPE page par page depuis l'API ADEME (échelle nationale)."""
     records = []
     page = 1
 
@@ -86,7 +91,11 @@ def _keep_common_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def _drop_sparse_columns(df: pd.DataFrame, thresh: float = COL_MISSING_THRESH) -> pd.DataFrame:
     """Supprime les colonnes encore trop souvent vides."""
-    protect = {c for c in ("type_logement", "numero_dpe", "_id") if c in df.columns}
+    protect = {
+        c
+        for c in ("type_logement", "numero_dpe", "_id", "code_departement_ban")
+        if c in df.columns
+    }
     miss_rate = df.isna().mean()
     keep = [c for c in df.columns if c in protect or miss_rate[c] <= thresh]
     dropped = len(df.columns) - len(keep)
@@ -113,7 +122,11 @@ def _drop_sparse_rows(df: pd.DataFrame, thresh: float = ROW_MISSING_THRESH) -> p
 def _impute_missing(df: pd.DataFrame, n_neighbors: int = KNN_NEIGHBORS) -> pd.DataFrame:
     """KNN sur les numériques ; mode sur les catégorielles restantes."""
     df = df.copy()
-    skip = {c for c in ("_id", "_score", "numero_dpe", "type_logement") if c in df.columns}
+    skip = {
+        c
+        for c in ("_id", "_score", "numero_dpe", "type_logement", "code_departement_ban")
+        if c in df.columns
+    }
 
     num_cols = [
         c
@@ -198,15 +211,23 @@ def extract_dpe(
     n_existants: int = 8000,
     n_neufs: int = 2000,
     clean: bool = True,
+    enrich_meteo: bool = True,
     save: bool = True,
     out_dir: Path | str = DATA_DIR,
+    meteo_path: Path | str = METEO_CSV,
 ) -> pd.DataFrame:
-    """Extrait les DPE existants et neufs, fusionne, nettoie, puis sauvegarde (optionnel)."""
+    """Extrait les DPE existants et neufs à l'échelle nationale, fusionne, nettoie, enrichit, sauvegarde.
+
+    Si ``enrich_meteo`` est True, joint DJU / T° hiver / T° été (Open-Meteo)
+    via ``code_departement_ban`` avant la sauvegarde CSV.
+    """
     df_existants = fetch_dpe(URL_EXISTANTS, n_existants, "existant")
     df_neufs = fetch_dpe(URL_NEUFS, n_neufs, "neuf")
     merged = pd.concat([df_existants, df_neufs], ignore_index=True, sort=False)
     if clean:
         merged = clean_dpe(merged)
+    if enrich_meteo:
+        merged = enrich_dpe_with_meteo(merged, meteo_path=meteo_path)
     if save:
         save_dpe(merged, n_existants=n_existants, n_neufs=n_neufs, out_dir=out_dir)
     return merged
@@ -215,4 +236,4 @@ def extract_dpe(
 if __name__ == "__main__":
     merged = extract_dpe(n_existants=500, n_neufs=200)
     print(merged["type_logement"].value_counts())
-    print(merged.head())
+    print(merged[["code_departement_ban", "dju", "t_moy_hiver", "t_moy_ete"]].head())
