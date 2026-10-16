@@ -12,6 +12,8 @@ m2_enedis/
 │   └── raw/
 │       ├── meteo_departements.csv   # DJU / T° hiver / T° été (101 dép.)
 │       └── dpe_n*_e*_n*.csv         # extractions DPE enrichies
+├── notebooks/
+│   └── exploration_regression.ipynb  # régression conso + régularisation + ACM
 ├── models/
 ├── requirements.txt
 └── README.md
@@ -82,8 +84,71 @@ Si `meteo_departements.csv` est absent, le fetch Open-Meteo est lancé automatiq
 
 Les logements sans géocodage BAN (`code_departement_ban` manquant) restent sans valeurs météo (NaN).
 
+## 3. Régression — prédire `conso_5_usages_par_m2_ef`
+
+Notebook : `notebooks/exploration_regression.ipynb`  
+Jeu : `data/raw/dpe_n700_e500_n200.csv` (~700 DPE demandés ; ~680 lignes après nettoyage).
+
+### Objectif
+
+Prédire la consommation énergétique finale au m² (`conso_5_usages_par_m2_ef`, kWh/m²) à partir des variables DPE + climat (`dju`, `t_moy_hiver`, `t_moy_ete`).
+
+### Préparation des features
+
+| Type | Traitement |
+|---|---|
+| Numériques | Conservées (hors ids) |
+| Ordinales (étiquette DPE/GES, qualités d’isolation, altitude, inertie, période de construction, confort d’été) | Encodage ordinal |
+| Autres qualitatives | `get_dummies` (one-hot, `drop_first=True`) |
+| Manquants | Médiane estimée sur le **train** uniquement (`SimpleImputer`) |
+| Scaling (modèles pénalisés) | `StandardScaler` fit sur le train |
+
+Split : **70 % train / 30 % test** (`random_state=42`) → environ 478 / 205 lignes, ~1770 features après encodage.
+
+### Tests menés
+
+1. **OLS** (`LinearRegression`) — baseline sans pénalité  
+2. **Ridge (L2)** — `GridSearchCV` sur `alpha`, scoring RMSE, CV 5 folds  
+3. **Lasso (L1)** — idem  
+4. **Elastic Net (L1+L2)** — grille sur `(alpha, l1_ratio)`  
+5. **ACM** (`prince.MCA`) sur les qualitatives non ordinales — exploration des associations de modalités
+
+### Résultats (échantillon n≈700)
+
+| Modèle | Meilleurs hyperparamètres (CV) | RMSE CV | MAE test | RMSE test | R² test |
+|---|---|---|---|---|---|
+| OLS | — | — | 4.69 | 9.26 | 0.986 |
+| Ridge (L2) | `alpha ≈ 0.53` | 35.9 | 23.8 | 42.1 | 0.709 |
+| **Lasso (L1)** | **`alpha ≈ 0.53`** | **11.4** | **4.4** | **8.2** | **0.989** |
+| Elastic Net | `alpha ≈ 0.023`, `l1_ratio = 0.8` | 21.9 | 11.9 | 20.8 | 0.929 |
+
+L’ACM n’a pas fait ressortir d’axe ou de groupe d’axes suffisamment interprétable / utile pour la suite modélisation.
+
+### Choix finaux
+
+- **Modèle retenu** : régression linéaire **pénalisée Lasso (L1)**  
+  - Meilleur RMSE en validation croisée et meilleures métriques test parmi Ridge / Lasso / Elastic Net  
+  - Sélection automatique de variables adaptée au grand nombre de dummies DPE  
+- **ACM** : non poursuivie pour l’instant (peu d’intérêt structurel observé)  
+- **Elastic Net** : bon compromis théorique L1+L2, mais ici moins performant que Lasso pur sur cet échantillon  
+- **OLS** : R² élevé mais non régularisé → moins fiable quand `p ≫` stabilité souhaitée ; Lasso reste préférable
+
+### Pistes d’optimisation ultérieures (Lasso)
+
+- Affiner `alpha` (`LassoCV`, grille plus dense autour de 0.53)  
+- Pipeline unique imputer → scaler → Lasso en CV (zéro fuite de prétraitement)  
+- Retirer d’éventuelles variables de **leakage** (autres `conso_*` / coûts très liés à la cible)  
+- Augmenter la taille d’extraction ADEME pour stabiliser la sélection
+
+```bash
+# ouvrir / exécuter le notebook
+jupyter notebook notebooks/exploration_regression.ipynb
+```
+
 ## Dépendances
 
 - `pandas`
 - `requests`
-- `scikit-learn` (KNNImputer)
+- `scikit-learn` (KNNImputer, régression, GridSearchCV)
+- `prince` (ACM)
+- `matplotlib`
