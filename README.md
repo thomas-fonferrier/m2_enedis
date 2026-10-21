@@ -107,13 +107,15 @@ Split : **70 % train / 30 % test** (`random_state=42`) → environ 478 / 205 lig
 
 ### Tests menés
 
-1. **OLS** (`LinearRegression`) — baseline sans pénalité  
+1. **OLS** (`LinearRegression`) — baseline sans pénalité (~1770 features)  
 2. **Ridge (L2)** — `GridSearchCV` sur `alpha`, scoring RMSE, CV 5 folds  
 3. **Lasso (L1)** — idem  
 4. **Elastic Net (L1+L2)** — grille sur `(alpha, l1_ratio)`  
-5. **ACM** (`prince.MCA`) sur les qualitatives non ordinales — exploration des associations de modalités
+5. **OLS restreinte « propriétaire »** — sous-ensemble de features significatives OLS **et** connues d’un propriétaire  
+6. **Régularisation CV sur le modèle propriétaire** — Ridge / Lasso / Elastic Net (même protocole)  
+7. **ACM** (`prince.MCA`) sur les qualitatives non ordinales — exploration des associations de modalités
 
-### Résultats (échantillon n≈700)
+### Résultats — toutes features (échantillon n≈700)
 
 | Modèle | Meilleurs hyperparamètres (CV) | RMSE CV | MAE test | RMSE test | R² test |
 |---|---|---|---|---|---|
@@ -124,21 +126,42 @@ Split : **70 % train / 30 % test** (`random_state=42`) → environ 478 / 205 lig
 
 L’ACM n’a pas fait ressortir d’axe ou de groupe d’axes suffisamment interprétable / utile pour la suite modélisation.
 
+### Modèle « propriétaire » (features restreintes)
+
+Objectif : un modèle utilisable en input par un propriétaire, sans variables trop techniques ni leakage (`emission_ges_*`, `conso_*_ep`, `methode_application_dpe`, `inertie_lourde`, `categorie_enr`, `type_energie_n1`).
+
+**Features retenues** (~29 après one-hot) :
+
+| Type | Variables |
+|---|---|
+| Ordinales / numériques | `etiquette_dpe`, `etiquette_ges`, `qualite_isolation_murs`, `logement_traversant`, `nombre_niveau_immeuble` |
+| Qualitatives (dummies) | `type_installation_chauffage`, `type_installation_ecs`, `type_energie_principale_chauffage`, `type_energie_principale_ecs`, `zone_climatique` |
+
+Même split 70/30 (`random_state=42`), imputation médiane + `StandardScaler` pour les modèles pénalisés.
+
+| Modèle | Meilleurs hyperparamètres (CV) | RMSE CV | MAE test | RMSE test | R² test |
+|---|---|---|---|---|---|
+| OLS restreinte | — | — | 22.0 | 28.5 | 0.867 |
+| Ridge (L2) | `alpha ≈ 4.33` | 35.6 | 22.2 | 28.1 | 0.870 |
+| Lasso (L1) | `alpha ≈ 0.53` | 35.6 | 22.0 | 27.4 | 0.876 |
+| **Elastic Net (L1+L2)** | **`alpha ≈ 0.023`, `l1_ratio = 0.2`** | **35.6** | **22.2** | **28.1** | **0.870** |
+
+Sur ce sous-ensemble, les trois pénalisations sont quasi équivalentes en RMSE CV ; **Elastic Net** est retenu de justesse. Les coefficients les plus forts portent surtout sur `etiquette_ges`, `etiquette_dpe`, les énergies principales (ECS / chauffage) et `qualite_isolation_murs`.
+
 ### Choix finaux
 
-- **Modèle retenu** : régression linéaire **pénalisée Lasso (L1)**  
-  - Meilleur RMSE en validation croisée et meilleures métriques test parmi Ridge / Lasso / Elastic Net  
-  - Sélection automatique de variables adaptée au grand nombre de dummies DPE  
+- **Toutes features** : régression **Lasso (L1)** (`alpha ≈ 0.53`) — meilleur RMSE CV / test ; sélection automatique adaptée au grand nombre de dummies DPE  
+- **Modèle propriétaire** : **Elastic Net** (`alpha ≈ 0.023`, `l1_ratio = 0.2`) — performances proches de Ridge/Lasso, features interprétables et saisissables sans expertise DPE  
 - **ACM** : non poursuivie pour l’instant (peu d’intérêt structurel observé)  
-- **Elastic Net** : bon compromis théorique L1+L2, mais ici moins performant que Lasso pur sur cet échantillon  
-- **OLS** : R² élevé mais non régularisé → moins fiable quand `p ≫` stabilité souhaitée ; Lasso reste préférable
+- **OLS pleine** : R² élevé mais non régularisé et exposé au leakage (`conso_*_ep`, `emission_ges_*`) ; Lasso reste préférable quand `p ≫ n`
 
-### Pistes d’optimisation ultérieures (Lasso)
+### Pistes d’optimisation ultérieures
 
-- Affiner `alpha` (`LassoCV`, grille plus dense autour de 0.53)  
-- Pipeline unique imputer → scaler → Lasso en CV (zéro fuite de prétraitement)  
-- Retirer d’éventuelles variables de **leakage** (autres `conso_*` / coûts très liés à la cible)  
-- Augmenter la taille d’extraction ADEME pour stabiliser la sélection
+- Affiner `alpha` / `l1_ratio` (grilles plus denses autour des optima)  
+- Pipeline unique imputer → scaler → modèle en CV (zéro fuite de prétraitement)  
+- Retirer d’éventuelles variables de **leakage** restantes sur le modèle toutes features  
+- Augmenter la taille d’extraction ADEME pour stabiliser la sélection  
+- Enrichir le modèle propriétaire avec d’autres variables « grand public » (surface, année de construction, type de logement)
 
 ```bash
 # ouvrir / exécuter le notebook
