@@ -1,0 +1,5 @@
+etiquette_dpe,etiquette_ges,qualite_isolation_murs,logement_traversant,nombre_niveau_immeuble,type_installation_chauffage,type_installation_ecs,type_energie_principale_chauffage,type_energie_principale_ecs,zone_climatique
+C,A,moyenne,1.0,4.0,individuel,individuel,Électricité,Électricité,H3
+C,C,insuffisante,0.0,1.6,collectif,collectif,Réseau de Chauffage urbain,Réseau de Chauffage urbain,H1a
+C,C,très bonne,1.0,3.0,collectif,collectif,Gaz naturel,Gaz naturel,H3
+E,D,insuffisante,0.4,6.0,collectif,individuel,Réseau de Chauffage urbain,Électricité,H1a

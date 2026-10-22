@@ -15,6 +15,12 @@ m2_enedis/
 ├── notebooks/
 │   └── exploration_regression.ipynb  # régression conso + régularisation + ACM
 ├── models/
+│   ├── regression_conso.py                 # API prod conso (Elastic Net propriétaire)
+│   ├── modele_conso_proprietaire.joblib    # artefact entraîné
+│   ├── schema_entrees_conso.json
+│   ├── informations_modele_conso.json
+│   ├── classification_dpe.py               # API prod étiquette DPE
+│   └── modele_dpe_combinaison.joblib
 ├── requirements.txt
 └── README.md
 ```
@@ -168,10 +174,58 @@ Sur ce sous-ensemble, les trois pénalisations sont quasi équivalentes en RMSE 
 jupyter notebook notebooks/exploration_regression.ipynb
 ```
 
+## 4. Production — modèle conso « propriétaire »
+
+Modèle retenu pour la prédiction opérationnelle de `conso_5_usages_par_m2_ef` :
+
+- **Elastic Net** (`alpha ≈ 0.023`, `l1_ratio = 0.2`)
+- Entrées limitées aux variables qu’une personne lambda peut connaître (étiquette DPE/GES, isolation murs, traversant, étages, type d’installation, énergie principale, zone climatique)
+- Module : `models/regression_conso.py`
+- Artefact : `models/modele_conso_proprietaire.joblib`
+
+### (Ré)entraîner / exporter
+
+```bash
+cd m2_enedis
+python -c "from models.regression_conso import entrainer_et_exporter; entrainer_et_exporter()"
+# ou : python models/regression_conso.py
+```
+
+Sorties : joblib, `informations_modele_conso.json`, `schema_entrees_conso.json`, CSV d’exemples.
+
+Le script évalue sur un split 70/30 (`random_state=42`), puis **réentraîne sur l’ensemble** des logements valides pour l’artefact de production.
+
+### Prédire
+
+```python
+from models.regression_conso import charger_modele
+
+modele = charger_modele()
+pred = modele.predict({
+    "etiquette_dpe": "D",
+    "etiquette_ges": "C",
+    "qualite_isolation_murs": "moyenne",
+    "logement_traversant": 1.0,
+    "nombre_niveau_immeuble": 4,
+    "type_installation_chauffage": "individuel",
+    "type_installation_ecs": "individuel",
+    "type_energie_principale_chauffage": "Gaz naturel",
+    "type_energie_principale_ecs": "Gaz naturel",
+    "zone_climatique": "H1a",
+})
+# → array de conso_5_usages_par_m2_ef en kWh/m²
+
+modele.coefficients()  # coefficients Elastic Net triés par |coef|
+```
+
+Champs absents → NaN puis imputation médiane ; modalités catégorielles inconnues → colonnes one-hot à 0.
+
 ## Dépendances
 
 - `pandas`
+- `numpy`
 - `requests`
 - `scikit-learn` (KNNImputer, régression, GridSearchCV)
+- `joblib` (sérialisation des modèles)
 - `prince` (ACM)
 - `matplotlib`

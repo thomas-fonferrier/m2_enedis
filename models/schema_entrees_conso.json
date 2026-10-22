@@ -1,0 +1,78 @@
+{
+  "cible": "conso_5_usages_par_m2_ef",
+  "unite": "kWh/m²",
+  "obligatoires": [],
+  "numeriques": [
+    "logement_traversant",
+    "nombre_niveau_immeuble"
+  ],
+  "ordinales": {
+    "etiquette_dpe": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G"
+    ],
+    "etiquette_ges": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G"
+    ],
+    "qualite_isolation_murs": [
+      "insuffisante",
+      "moyenne",
+      "bonne",
+      "très bonne"
+    ]
+  },
+  "categoriels": {
+    "type_installation_chauffage": [
+      "collectif",
+      "individuel",
+      "mixte (collectif-individuel)"
+    ],
+    "type_installation_ecs": [
+      "collectif",
+      "individuel",
+      "mixte (collectif-individuel)"
+    ],
+    "type_energie_principale_chauffage": [
+      "Bois – Bûches",
+      "Bois – Granulés (pellets) ou briquettes",
+      "Fioul domestique",
+      "GPL",
+      "Gaz naturel",
+      "Propane",
+      "Réseau de Chauffage urbain",
+      "Électricité"
+    ],
+    "type_energie_principale_ecs": [
+      "Fioul domestique",
+      "GPL",
+      "Gaz naturel",
+      "Non affecté",
+      "Propane",
+      "Réseau de Chauffage urbain",
+      "Électricité"
+    ],
+    "zone_climatique": [
+      "H1a",
+      "H1b",
+      "H1c",
+      "H2a",
+      "H2b",
+      "H2c",
+      "H2d",
+      "H3"
+    ]
+  },
+  "autres_champs_absents": "Acceptés ; imputation médiane / modalités one-hot absentes à 0",
+  "consommations_emissions": "Ne sont pas des entrées du modèle"
+}
