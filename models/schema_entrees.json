@@ -1,0 +1,58 @@
+{
+  "obligatoires": [
+    "source_dpe",
+    "type_batiment"
+  ],
+  "source_dpe": [
+    "existant",
+    "neuf"
+  ],
+  "type_batiment": [
+    "maison",
+    "appartement"
+  ],
+  "numeriques": [
+    "surface_habitable_logement",
+    "hauteur_sous_plafond",
+    "annee_construction",
+    "nombre_niveau_logement",
+    "ubat_w_par_m2_k",
+    "surface_climatisee"
+  ],
+  "categoriels": [
+    "source_dpe",
+    "type_batiment",
+    "periode_construction",
+    "zone_climatique",
+    "classe_altitude",
+    "classe_inertie_batiment",
+    "numero_etage_appartement",
+    "type_installation_chauffage",
+    "type_installation_ecs",
+    "type_energie_n1",
+    "type_energie_principale_chauffage",
+    "type_energie_principale_ecs",
+    "type_generateur_chauffage_principal",
+    "type_ventilation",
+    "presence_production_pv",
+    "isolation_toiture",
+    "logement_traversant",
+    "qualite_isolation_enveloppe",
+    "qualite_isolation_murs",
+    "qualite_isolation_menuiseries",
+    "qualite_isolation_plancher_bas",
+    "qualite_isolation_plancher_haut_comble_amenage",
+    "qualite_isolation_plancher_haut_comble_perdu",
+    "qualite_isolation_plancher_haut_toit_terrasse"
+  ],
+  "unites": {
+    "surface_habitable_logement": "m²",
+    "hauteur_sous_plafond": "m",
+    "surface_climatisee": "m²",
+    "ubat_w_par_m2_k": "W/(m².K)"
+  },
+  "autres_champs_absents": "Acceptés ; préparation puis imputation des pipelines entraînés",
+  "volume_habitable_estime_m3": "Calculé automatiquement : surface × hauteur",
+  "modalites_nouvelles": "Traitées par les encodeurs déjà entraînés",
+  "consommations_emissions_etiquettes": "Ne sont pas des entrées du modèle"
+}
