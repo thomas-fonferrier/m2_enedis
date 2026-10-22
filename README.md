@@ -1,11 +1,82 @@
 # Projet Enedis - GreenTech Solutions
 
-Pipeline d’extraction et d’enrichissement des **DPE ADEME** (logements existants et neufs) à l’échelle nationale, avec climat départemental (Open-Meteo).
+Application web prête à l'emploi pour **explorer les DPE de l'ADEME** (logements existants et neufs)
+et **prédire l'étiquette DPE et la consommation énergétique** d'un logement, à partir d'un pipeline
+d'extraction et d'enrichissement climatique (Open-Meteo) et de deux modèles de machine learning.
+
+## Démarrage rapide (Docker — recommandé)
+
+L'application est livrée sous forme d'**image Docker prête à l'emploi** : elle contient
+l'application, les modèles entraînés, les données et toutes les dépendances. Au démarrage du
+conteneur, l'application se lance directement — aucune installation Python n'est nécessaire.
+
+**Prérequis :** [Docker Desktop](https://www.docker.com/products/docker-desktop/) installé et démarré.
+
+### 1. Obtenir l'image
+
+**Option A — charger l'image fournie** (`greentech-dpe.tar`, ~540 Mo, aucune compilation) :
+
+```bash
+docker load -i greentech-dpe.tar
+```
+
+**Option B — construire l'image depuis les sources** (à la racine du projet, quelques minutes la première fois) :
+
+```bash
+docker build -t greentech-dpe .
+```
+
+### 2. Démarrer l'application
+
+```bash
+docker run -d --name greentech-dpe -p 8501:8501 greentech-dpe
+```
+
+### 3. Ouvrir l'application
+
+Attendre ~10 secondes puis ouvrir dans le navigateur : **http://localhost:8501**
+
+`-p 8501:8501` relie le port 8501 de votre machine à celui du conteneur. Si le port 8501 est
+déjà utilisé, choisissez-en un autre à gauche, par exemple `-p 8080:8501` → http://localhost:8080.
+Les logs du conteneur affichent toujours `localhost:8501` : c'est le port *interne* ; l'adresse
+à utiliser dans le navigateur est celle du port de gauche.
+
+### Commandes utiles
+
+| Action | Commande |
+|---|---|
+| Vérifier que l'application est prête (statut `healthy`) | `docker ps` |
+| Voir les logs | `docker logs -f greentech-dpe` |
+| Arrêter | `docker stop greentech-dpe` |
+| Relancer après un arrêt | `docker start greentech-dpe` |
+| Supprimer le conteneur | `docker rm -f greentech-dpe` |
+| Exporter l'image pour la partager | `docker save -o greentech-dpe.tar greentech-dpe` |
+
+**Déploiement (Render, Heroku…)** : l'image écoute sur la variable `$PORT` lorsqu'elle est
+fournie par l'hébergeur, sinon sur 8501. Aucune autre configuration n'est nécessaire.
+
+> Le réentraînement depuis la page *Modèles* écrit le nouveau modèle *dans le conteneur* :
+> il est perdu si le conteneur est supprimé (l'image d'origine reste intacte).
+
+## L'application
+
+Interface web en 4 pages (navigation en haut, thème clair / sombre) :
+
+| Page | Contenu |
+|---|---|
+| **Contexte** | Enjeux du projet, échelle DPE A→G, calendrier de la loi Climat et Résilience, sources |
+| **Exploration** | Filtres (logement, bâtiment, étiquette, zone, énergie, surface, année), indicateurs clés, carte interactive, histogramme, barres empilées, boîtes à moustaches, nuage de points |
+| **Prédiction** | Simulateur d'étiquette DPE (probabilités par classe) → consommation au m² pré-remplie, prédiction par lot depuis un CSV |
+| **Modèles** | Métriques des deux modèles, variables influentes, réentraînement du modèle de consommation |
+
+Chaque graphique s'exporte en **PNG** et ses données en **CSV**.
 
 ## Structure
 
 ```
 m2_enedis/
+├── app/                   # application web Streamlit (voir section 5)
+├── Dockerfile             # image prête à l'emploi
 ├── data/
 │   ├── extraction.py      # Fetch ADEME + nettoyage + jointure météo + CSV
 │   ├── meteo.py           # Fetch Open-Meteo Historical par département
@@ -25,12 +96,27 @@ m2_enedis/
 └── README.md
 ```
 
-## Installation
+## Utilisation manuelle (sans Docker)
+
+Pour développer ou relancer le pipeline de données / d'entraînement. Python **3.13** et
+`scikit-learn==1.6.1` sont requis pour recharger les modèles sérialisés.
 
 ```bash
 cd m2_enedis
-pip install -r requirements.txt
+python -m venv .venv
+.venv\Scripts\activate            # macOS / Linux : source .venv/bin/activate
+pip install -r requirements.txt    # pipeline données + modèles (sections 1 à 4)
+pip install -r app/requirements.txt  # application web
 ```
+
+Lancer l'application en local :
+
+```bash
+streamlit run app/app.py           # → http://localhost:8501
+```
+
+L'export PNG utilise Chrome / Chromium (détecté automatiquement s'il est installé sur la machine).
+Après une modification de `app/utils.py`, redémarrer le serveur (Ctrl+C puis relancer).
 
 ## 1. Climat départemental (`data/meteo.py`)
 
@@ -220,18 +306,10 @@ modele.coefficients()  # coefficients Elastic Net triés par |coef|
 
 Champs absents → NaN puis imputation médiane ; modalités catégorielles inconnues → colonnes one-hot à 0.
 
-## 5. Application Streamlit (`app/`)
+## 5. Application Streamlit (`app/`) — détails techniques
 
-Interface web en 4 pages (navigation en haut) :
-
-| Page | Contenu |
-|---|---|
-| **Contexte** | Enjeux du projet, échelle DPE A→G, calendrier de la loi Climat et Résilience, sources |
-| **Exploration** | Filtres (logement, bâtiment, étiquette, zone, énergie, surface, année), indicateurs clés, carte interactive, histogramme, barres empilées, boîtes à moustaches, nuage de points |
-| **Prédiction** | Simulateur d'étiquette DPE (probabilités par classe) → consommation au m² pré-remplie, prédiction par lot depuis un CSV |
-| **Modèles** | Métriques des deux modèles, variables influentes, réentraînement du modèle de consommation |
-
-Chaque graphique s'exporte en **PNG** (kaleido) et ses données en **CSV**.
+Pages décrites dans [L'application](#lapplication) ; lancement : [Démarrage rapide](#démarrage-rapide-docker--recommandé)
+ou [Utilisation manuelle](#utilisation-manuelle-sans-docker).
 
 ```
 app/
@@ -241,28 +319,15 @@ app/
 ├── assets/           # logo et illustrations SVG
 └── requirements.txt  # versions figées (compatibles avec les artefacts joblib)
 .streamlit/config.toml  # thème clair / sombre
+Dockerfile              # image python:3.13-slim + Chromium (export PNG via kaleido)
 ```
 
-### Lancer en local
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate            # macOS / Linux : source .venv/bin/activate
-pip install -r app/requirements.txt
-streamlit run app/app.py           # → http://localhost:8501
-```
-
-Python 3.13 et `scikit-learn==1.6.1` sont requis pour recharger les modèles sérialisés.
-L'export PNG utilise Chrome / Chromium (détecté automatiquement s'il est installé).
-
-### Docker
-
-```bash
-docker build -t greentech-dpe .
-docker run -p 8501:8501 greentech-dpe
-```
-
-L'image écoute sur `$PORT` s'il est défini (Render, Heroku), sinon sur 8501.
+- Les modèles sont chargés une seule fois (`st.cache_resource`) ; le modèle de classification
+  ayant été sérialisé avec `classification_dpe` comme module de premier niveau, `utils.py`
+  ajoute `models/` au `sys.path`.
+- Les modalités proposées dans les formulaires proviennent des données et des encodeurs entraînés.
+- Couleurs : échelle officielle ADEME pour les étiquettes A→G, palette catégorielle validée
+  (daltonisme) pour les autres séries.
 
 ## Dépendances
 
@@ -273,3 +338,5 @@ L'image écoute sur `$PORT` s'il est défini (Render, Heroku), sinon sur 8501.
 - `joblib` (sérialisation des modèles)
 - `prince` (ACM)
 - `matplotlib`
+- `streamlit` (application web)
+- `plotly` + `kaleido` (graphiques interactifs, export PNG)

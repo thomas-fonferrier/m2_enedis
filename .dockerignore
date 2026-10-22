@@ -5,3 +5,4 @@ notebooks
 docs
 data/*.py
 *.ipynb
+*.tar

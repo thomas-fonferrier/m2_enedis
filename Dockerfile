@@ -1,13 +1,17 @@
 # Application Streamlit GreenTech — DPE & consommation
 # Build : docker build -t greentech-dpe .
-# Run   : docker run -p 8501:8501 greentech-dpe   →  http://localhost:8501
+# Run   : docker run -d --name greentech-dpe -p 8501:8501 greentech-dpe
+# Ouvrir: http://localhost:8501
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     # Navigateur utilisé par kaleido pour l'export PNG des graphiques
-    BROWSER_PATH=/usr/bin/chromium
+    BROWSER_PATH=/usr/bin/chromium \
+    # Mode production : pas de surveillance des fichiers source
+    STREAMLIT_SERVER_FILE_WATCHER_TYPE=none \
+    STREAMLIT_SERVER_HEADLESS=true
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends chromium \

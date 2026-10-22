@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Image Docker exportée (docker save)
+*.tar
