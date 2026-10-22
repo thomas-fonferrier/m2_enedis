@@ -1,0 +1,4 @@
+-r ../models/requirements.txt
+streamlit==1.66.1
+plotly==7.1.0
+kaleido==1.5.0

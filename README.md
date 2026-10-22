@@ -220,6 +220,50 @@ modele.coefficients()  # coefficients Elastic Net triés par |coef|
 
 Champs absents → NaN puis imputation médiane ; modalités catégorielles inconnues → colonnes one-hot à 0.
 
+## 5. Application Streamlit (`app/`)
+
+Interface web en 4 pages (navigation en haut) :
+
+| Page | Contenu |
+|---|---|
+| **Contexte** | Enjeux du projet, échelle DPE A→G, calendrier de la loi Climat et Résilience, sources |
+| **Exploration** | Filtres (logement, bâtiment, étiquette, zone, énergie, surface, année), indicateurs clés, carte interactive, histogramme, barres empilées, boîtes à moustaches, nuage de points |
+| **Prédiction** | Simulateur d'étiquette DPE (probabilités par classe) → consommation au m² pré-remplie, prédiction par lot depuis un CSV |
+| **Modèles** | Métriques des deux modèles, variables influentes, réentraînement du modèle de consommation |
+
+Chaque graphique s'exporte en **PNG** (kaleido) et ses données en **CSV**.
+
+```
+app/
+├── app.py            # point d'entrée : thème, logo, navigation
+├── utils.py          # chargement données / modèles (cache), couleurs DPE, cartes graphiques + exports
+├── vues/             # contexte.py, exploration.py, prediction.py, modeles.py
+├── assets/           # logo et illustrations SVG
+└── requirements.txt  # versions figées (compatibles avec les artefacts joblib)
+.streamlit/config.toml  # thème clair / sombre
+```
+
+### Lancer en local
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate            # macOS / Linux : source .venv/bin/activate
+pip install -r app/requirements.txt
+streamlit run app/app.py           # → http://localhost:8501
+```
+
+Python 3.13 et `scikit-learn==1.6.1` sont requis pour recharger les modèles sérialisés.
+L'export PNG utilise Chrome / Chromium (détecté automatiquement s'il est installé).
+
+### Docker
+
+```bash
+docker build -t greentech-dpe .
+docker run -p 8501:8501 greentech-dpe
+```
+
+L'image écoute sur `$PORT` s'il est défini (Render, Heroku), sinon sur 8501.
+
 ## Dépendances
 
 - `pandas`

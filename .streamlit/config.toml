@@ -1,0 +1,26 @@
+[server]
+headless = true
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+baseRadius = "medium"
+showSidebarBorder = true
+
+[theme.light]
+primaryColor = "#0e9f6e"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f6f5"
+textColor = "#1b2321"
+
+[theme.dark]
+primaryColor = "#34c08f"
+backgroundColor = "#111615"
+secondaryBackgroundColor = "#1b2321"
+textColor = "#eef2f1"

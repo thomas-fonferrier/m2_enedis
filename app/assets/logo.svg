@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64">
+  <rect width="64" height="64" rx="14" fill="#0e9f6e"/>
+  <path d="M32 13 12 30h6v20h28V30h6z" fill="#fff"/>
+  <path d="M34 26 25 39h7l-2 9 9-13h-7z" fill="#0e9f6e"/>
+  <text x="78" y="30" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#0e9f6e">GreenTech</text>
+  <text x="78" y="54" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" fill="#7a8a86">DPE · Énergie</text>
+</svg>
