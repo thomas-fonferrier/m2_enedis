@@ -12,8 +12,8 @@ L'application GreenTech DPE aide à comprendre et à estimer la performance éne
 
 **Contenu :**
 
-- quatre indicateurs clés : nombre de logements analysés, départements couverts, consommation médiane et part de passoires thermiques ;
-- le calendrier de la loi Climat et Résilience, qui interdit la location des logements G depuis 2025, puis des logements F en 2028 et E en 2034 ;
+- Quatre indicateurs clés : nombre de logements analysés, départements couverts, consommation médiane et part de passoires thermiques 
+- le calendrier de la loi Climat et Résilience, qui interdit la location des logements G depuis 2025, puis des logements F en 2028 et E en 2034 
 - l'échelle officielle du DPE, de A à G, et la liste des sources de données.
 
 ### 2.2 Exploration
