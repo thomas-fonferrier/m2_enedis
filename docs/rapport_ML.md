@@ -1,6 +1,6 @@
 # Prédiction de l'étiquette DPE et de la consommation énergétique des logements
 
-**Rapport d'étude — Projet Enedis / GreenTech Solutions — Novembre 2026**
+**Rapport d'étude 
 
 ---
 
