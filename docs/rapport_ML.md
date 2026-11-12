@@ -1,9 +1,5 @@
 # Prédiction de l'étiquette DPE et de la consommation énergétique des logements
 
-Rapport d'étude 
-
----
-
 ## 1. Contexte et objectifs
 
 La loi Climat et Résilience interdit progressivement la location des logements les plus énergivores : les logements classés **G** depuis 2025, puis les **F** en 2028 et les **E** en 2034. Dans ce contexte, Enedis souhaite mieux comprendre le lien entre l'étiquette du diagnostic de performance énergétique (DPE) et la consommation d'énergie des logements.
