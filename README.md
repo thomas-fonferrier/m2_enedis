@@ -6,6 +6,7 @@ d'extraction et d'enrichissement climatique (Open-Meteo) et de deux modèles de 
 
 
 **Application en ligne :** https://greentech-dpe.onrender.com
+
 **Vidéo de démonstration :** https://youtu.be/MhK_UCrS2GU
 
 ## Démarrage rapide (Docker — recommandé)
