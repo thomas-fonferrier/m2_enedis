@@ -4,6 +4,11 @@ Application web prête à l'emploi pour **explorer les DPE de l'ADEME** (logemen
 et **prédire l'étiquette DPE et la consommation énergétique** d'un logement, à partir d'un pipeline
 d'extraction et d'enrichissement climatique (Open-Meteo) et de deux modèles de machine learning.
 
+
+**Application en ligne :** https://greentech-dpe.onrender.com
+
+**Vidéo de démonstration :** https://youtu.be/MhK_UCrS2GU
+
 ## Démarrage rapide (Docker — recommandé)
 
 L'application est livrée sous forme d'**image Docker prête à l'emploi** : elle contient
